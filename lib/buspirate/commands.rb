@@ -7,6 +7,9 @@ module Buspirate
 
     module I2C
       ENTER = 0b00000010
+      PREPARE_WRITE = 0b00010000
+      READBYTE = 0b00000100
+      WRITE_THEN_READ = 0x8
 
       module Config
         CONF_PER = 0b01000000

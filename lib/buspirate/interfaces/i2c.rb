@@ -1,9 +1,13 @@
 # Encoding:binary
 # frozen_string_literal: true
 
+require 'timeout'
+
 module Buspirate
   module Interfaces
     class I2C
+      include Helpers
+
       def initialize(serial, bup)
         raise 'Bus pirate must be in i2c mode' unless bup.mode == :i2c
 
@@ -32,7 +36,7 @@ module Buspirate
       end
 
       def speed(le_speed)
-        bit_speed = case le_speed
+        bit_speed = case le_speed.to_sym
                     when :'5khz'
                       Commands::I2C::Config::Speed::S5KHZ
                     when :'50khz'
@@ -80,14 +84,74 @@ module Buspirate
         )
       end
 
-      private
+      def read(bytes = 1, auto_ack: true, auto_nack: true)
+        result = ''.dup.b
+        bytes.times do |t|
+          @le_port.write(Commands::I2C::READBYTE.chr)
+          Timeout.timeout(Timeouts::I2C::READ) do
+            result << @le_port.read(1)
+          end
+          send_ack if auto_ack && t + 1 != bytes
+          send_nack if auto_nack && t + 1 == bytes
+        end
+        result
+      end
 
-      def simplex_command(command, tout, ex_message)
-        @le_port.write(command.chr)
-        resp = @le_port.expect(Responses::SUCCESS, tout)
-        return true if resp
+      def bulk_write(data, ack_wait: true)
+        if !data.instance_of?(String) || data.instance_of(String) && data.empty?
+          raise ArgumentError, 'Bad data argument'
+        end
+        raise ArgumentError, 'Data is too long' if data.bytesize > 16
 
-        raise ex_message
+        bit_bulk_write = Commands::I2C::PREPARE_WRITE | data.bytesize - 1
+        simplex_command(
+          bit_bulk_write.chr,
+          Timeouts::I2C::PREPARE_WRITE,
+          'Unable to prepare write mode'
+        )
+        ack_array = []
+        data.each_byte do |data_byte|
+          @le_port.write(data_byte)
+          next unless ack_wait
+          result = nil
+          Timeout.timeout(Timeouts::I2C::SLAVE_ACKNACK) do
+            result = @le_port.read(1)
+          end
+          ack_result = case result.ord
+                       when 0
+                         :ack
+                       when 1
+                         :nack
+                       else
+                         raise 'Unknown bytewrite response'
+                       end
+
+          yield(ack_result) if block_given?
+          ack_array << ack_result
+        end
+        ack_array.freeze
+      end
+
+      def write_then_read(data, expected_bytes)
+        raise ArgumentError, 'Bad data type' unless data.instance_of?(String)
+        raise ArgumentError, 'Data is too long' if data.bytesize > 4096
+        raise ArgumentError, 'Bad expected_bytes type' unless expected_bytes.instance_of(Integer)
+        raise ArgumentError, 'Bad expected_bytes value' if expected_bytes.negative? || expected_bytes > 4096
+
+        binary_command = Commands::I2C::WRITE_THEN_READ.chr +
+                         [data.bytesize, expected_bytes].pack('S>S>') +
+                         data
+        @le_port.write(binary_command)
+        result = nil
+        Timeout.timeout(Timeouts::I2C::WRITE_THEN_READ_S) do
+          result = @le_port.read(1)
+        end
+        raise 'Write failed' if result.ord.zero?
+
+        Timeout.timeout(Timeouts::I2C::WRITE_THEN_READ_D) do
+          result = @le_port.read(expected_bytes)
+        end
+        result
       end
     end
   end
