@@ -134,10 +134,10 @@ module Buspirate
         ack_array.freeze
       end
 
-      def write_then_read(data, expected_bytes)
+      def write_then_read(data, expected_bytes = 0)
         raise ArgumentError, 'Bad data type' unless data.instance_of?(String)
         raise ArgumentError, 'Data is too long' if data.bytesize > 4096
-        raise ArgumentError, 'Bad expected_bytes type' unless expected_bytes.instance_of(Integer)
+        raise ArgumentError, 'Bad expected_bytes type' unless expected_bytes.instance_of?(Integer)
         raise ArgumentError, 'Bad expected_bytes value' if expected_bytes.negative? || expected_bytes > 4096
 
         binary_command = Commands::I2C::WRITE_THEN_READ.chr +
