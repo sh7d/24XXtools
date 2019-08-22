@@ -149,11 +149,14 @@ module Buspirate
           result = @le_port.read(1)
         end
         raise 'Write failed' if result.ord.zero?
-
-        Timeout.timeout(Timeouts::I2C::WRITE_THEN_READ_D) do
-          result = @le_port.read(expected_bytes)
+        if expected_bytes != 0
+          Timeout.timeout(Timeouts::I2C::WRITE_THEN_READ_D) do
+            result = @le_port.read(expected_bytes)
+          end
+          result
+        else
+          true
         end
-        result
       end
     end
   end
