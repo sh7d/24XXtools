@@ -10,7 +10,9 @@ module Buspirate
         @le_port = serial
       end
 
-      def configure_peripherals(power: false, pullup: false, aux: false, cs: false)
+      def configure_peripherals(
+        power: false, pullup: false, aux: false, cs: false
+      )
         class_used = [power, pullup, aux, cs].map(&:class).uniq.to_set.freeze
         if class_used != [FalseClass, TrueClass].to_set
           raise ArgumentError, 'All args must be true or false'
@@ -46,7 +48,7 @@ module Buspirate
         simplex_command(bit_speed, Timeouts::SUCCESS, 'Unable to set speed')
       end
 
-      def start
+      def send_start
         simplex_command(
           Commands::I2C::Flow::START,
           Timeouts::I2C::STARTSTOP,
@@ -54,7 +56,7 @@ module Buspirate
         )
       end
 
-      def stop
+      def send_stop
         simplex_command(
           Commands::I2C::Flow::STOP,
           Timeouts::I2C::STARTSTOP,
@@ -62,7 +64,7 @@ module Buspirate
         )
       end
 
-      def ack
+      def send_ack
         simplex_command(
           Commands::I2C::Flow::ACK,
           Timeouts::I2C::ACKNACK,
@@ -70,7 +72,7 @@ module Buspirate
         )
       end
 
-      def nack
+      def send_nack
         simplex_command(
           Commands::I2C::Flow::NACK,
           Timeouts::I2C::ACKNACK,
