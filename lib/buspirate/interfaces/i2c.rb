@@ -97,7 +97,6 @@ module Buspirate
         result
       end
 
-      def bulk_write(data, ack_wait: true)
         if !data.instance_of?(String) || data.instance_of(String) && data.empty?
           raise ArgumentError, 'Bad data argument'
         end
@@ -112,7 +111,6 @@ module Buspirate
         ack_array = []
         data.each_byte do |data_byte|
           @le_port.write(data_byte)
-          next unless ack_wait
           result = nil
           Timeout.timeout(Timeouts::I2C::SLAVE_ACKNACK) do
             result = @le_port.read(1)
