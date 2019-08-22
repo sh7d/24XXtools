@@ -13,7 +13,7 @@ module Buspirate
       READ = 1
       SLAVE_ACKNACK = 0.5
       WRITE_THEN_READ_S = 5
-      WRITE_THEN_READ_D = 0.1
+      WRITE_THEN_READ_D = 5
     end
   end
 end
