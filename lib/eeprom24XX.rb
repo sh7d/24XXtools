@@ -5,7 +5,7 @@ require 'stringio'
 
 module Eeprom24XX
   class Memory
-    attr_reader :pos, :configured
+    attr_reader :pos, :configured, :max_position
 
     def initialize(buspirate, eeprom_size, speed: :'100khz')
       raise ArgumentError, 'Bad buspirate arg' unless buspirate.instance_of?(Buspirate::Client)
@@ -31,7 +31,7 @@ module Eeprom24XX
       result
     end
 
-    def read(bytes, chunk_size: 16)
+    def read(bytes, chunk_size: 4096)
       raise 'Device must be configured' unless @configured
       raise ArgumentError, 'Bad chunk_size argument' unless chunk_size.instance_of?(Integer) && !chunk_size.negative?
       if @pos == @max_position
@@ -41,19 +41,14 @@ module Eeprom24XX
       bytestream = ''.b
       last_bytes = bytes
       loop do
-        toread = (last_bytes - 4096).positive? ? 4096 : last_bytes
+        toread = (last_bytes - chunk_size).positive? ? chunk_size : last_bytes
         result = @buspirate.interface.write_then_read(Commands::READ.chr, toread)
         raise 'Unable to read/timeout' unless result
 
         (@pos + toread) > @max_position ? seek(@max_position) : seek(@pos + toread)
         bytestream << result
-        last_bytes -= 4096
-        if block_given?
-          result = StringIO.new(result)
-          while (chunk = result.read(chunk_size))
-            yeld chunk
-          end
-        end
+        last_bytes -= chunk_size
+        yield result if block_given?
         break if last_bytes.negative? || @pos == @max_position
       end
       bytestream.freeze
