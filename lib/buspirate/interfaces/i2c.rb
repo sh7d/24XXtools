@@ -97,6 +97,10 @@ module Buspirate
         result
       end
 
+      def bulk_write(data)
+        raise ArgumentError, 'data must be String instance' unless data.instance_of?(String)
+        raise ArgumentError, 'ack_wait must be boolean' unless [TrueClass, FalseClass].include?(ack_wait)
+
         if !data.instance_of?(String) || data.instance_of(String) && data.empty?
           raise ArgumentError, 'Bad data argument'
         end
