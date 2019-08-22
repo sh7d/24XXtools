@@ -88,8 +88,8 @@ module Eeprom24XX
 
     def deconfigure
       if @configured
-        buspirate.interface.configure_peripherals(power: false, pullup: false)
-        buspirate.reset_binary_mode
+        @buspirate.interface.configure_peripherals(power: false, pullup: false)
+        @buspirate.reset_binary_mode
         @configured = false
       end
       @configured
