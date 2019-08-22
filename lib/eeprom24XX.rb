@@ -73,10 +73,11 @@ module Eeprom24XX
         begin
           Timeout.timeout(Timeouts::WRITE_WAIT_TIMEOUT) do
             loop do
-              sleep 0.1
               comm = [Commands::SEEKNWRITE, pos].pack('CS>')
               result = @buspirate.interface.write_then_read(comm, 0)
               break if result
+
+              sleep 0.1
             end
           end
         rescue Timeout::Error
