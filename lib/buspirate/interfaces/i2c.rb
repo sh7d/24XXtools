@@ -1,4 +1,4 @@
-# Encoding:binary
+# Encoding: binary
 # frozen_string_literal: true
 
 require 'timeout'
