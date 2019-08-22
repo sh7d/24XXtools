@@ -83,6 +83,7 @@ module Eeprom24XX
           raise 'Unable to get write ack - timeout'
         end
         @pos = pos
+        yeld data_chunk if block_given?
       end
     end
 
