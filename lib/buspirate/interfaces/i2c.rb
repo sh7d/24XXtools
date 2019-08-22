@@ -134,7 +134,10 @@ module Buspirate
         ack_array.freeze
       end
 
-      def write_then_read(data, expected_bytes = 0)
+      def write_then_read(
+        data, expected_bytes = 0,
+        succes_timeout: Timeouts::I2C::WRITE_THEN_READ_S
+      )
         raise ArgumentError, 'Bad data type' unless data.instance_of?(String)
         raise ArgumentError, 'Data is too long' if data.bytesize > 4096
         raise ArgumentError, 'Bad expected_bytes type' unless expected_bytes.instance_of?(Integer)
@@ -145,9 +148,15 @@ module Buspirate
                          data
         @le_port.write(binary_command)
         result = nil
-        Timeout.timeout(Timeouts::I2C::WRITE_THEN_READ_S) do
-          result = @le_port.read(1)
+        # So fucking ugly
+        begin
+          Timeout.timeout(succes_timeout) do
+            result = @le_port.read(1)
+          end
+        rescue Timeout::Error
+          return false
         end
+
         raise 'Write failed' if result.ord.zero?
         if expected_bytes != 0
           Timeout.timeout(Timeouts::I2C::WRITE_THEN_READ_D) do
