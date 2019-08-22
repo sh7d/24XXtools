@@ -17,9 +17,8 @@ module Buspirate
       def configure_peripherals(
         power: false, pullup: false, aux: false, cs: false
       )
-        class_used = [power, pullup, aux, cs].map(&:class).uniq.to_set.freeze
-        if class_used != [FalseClass, TrueClass].to_set
-          raise ArgumentError, 'All args must be true or false'
+        [power, pullup, aux, cs].map(&:class).each do |cls|
+          raise ArgumentError, 'All args must be true or false' unless [FalseClass, TrueClass].include?(cls)
         end
 
         bit_config = Commands::I2C::Config::CONF_PER
