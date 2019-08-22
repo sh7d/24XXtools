@@ -3,7 +3,7 @@
 
 module Buspirate
   module Timeouts
-    BINARY_RESET = 0.1
+    BINARY_RESET = 0.05
     SUCCESS = 0.1
     module I2C
       ENTER = 0.2
