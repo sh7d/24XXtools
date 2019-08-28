@@ -95,14 +95,17 @@ if le_options[:dump_file] || le_options[:read_file]
              puts 'Unable to configure buspirate i2c mode: ' + e
            end
   if le_options[:dump_file]
+    pg = ProgressBar.create(
+      title: 'Dumping', total: eeprom.max_position,
+      format: ' %t: [%B] %c/%C bytes '
+    )
     begin
-      File.open(le_options[:dump_file], 'w') do |dump_file|
-        puts "Dumping eeprom content to #{le_options[:dump_file]}..."
-        eeprom.read(eeprom.max_position) do |chunk|
+      File.open(le_options[:dump_file], 'wb') do |dump_file|
+        eeprom.read(eeprom.max_position, chunk_size: 1024) do |chunk|
           dump_file.write(chunk)
+          pg.progress += chunk.size
         end
       end
-      puts 'Done'
     rescue RuntimeError => e
       puts 'Unable to dump eeprom: ' + e
       exit(6)
