@@ -27,7 +27,7 @@ optparse = OptParse.new do |opts|
     '-o file', '--output file', String, 'Dumps eeprom content to file '\
                                       '(needs also size argiment)'
   ) do |file|
-    raise "File #{file} exist" if File.exist?(file)
+    raise "File #{file} is a directory" if File.directory?(file)
 
     le_options[:dump_file] = file
   end
