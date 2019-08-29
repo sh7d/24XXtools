@@ -70,6 +70,8 @@ rescue RuntimeError => e
   exit(2)
 end
 
+le_options.freeze
+
 if le_options[:dump_file] || le_options[:read_file]
   buspirate_port = begin
                      Serial.new(
