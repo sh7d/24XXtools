@@ -5,7 +5,7 @@ require 'stringio'
 
 module Eeprom24XX
   class Memory
-    attr_reader :pos, :configured, :max_position
+    attr_reader :pos, :configured, :max_position, :page_size
 
     def initialize(buspirate, eeprom_size, speed: :'100khz')
       raise ArgumentError, 'Bad buspirate arg' unless buspirate.instance_of?(Buspirate::Client)
@@ -81,6 +81,7 @@ module Eeprom24XX
         @pos = pos
         yield data_chunk if block_given?
       end
+      data.size
     end
 
     def deconfigure

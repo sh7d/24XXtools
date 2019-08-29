@@ -91,9 +91,12 @@ if le_options[:dump_file] || le_options[:read_file]
                        puts 'Unable to initialize buspirate: ' + e
                        exit(4)
                      end
+
+  le_size = le_options[:size]
+  le_size = (File.size(le_options[:read_file]) + 1) / 128 if le_options[:read_file]
   eeprom = begin
-             Eeprom24XX::Memory.new(buspirate_client, le_options[:size])
-           rescue ArugmentError => e
+             Eeprom24XX::Memory.new(buspirate_client, le_size)
+           rescue ArgumentError => e
              puts e
              exit(5)
            rescue RuntimeError => e
@@ -108,7 +111,7 @@ if le_options[:dump_file] || le_options[:read_file]
       File.open(le_options[:dump_file], 'wb') do |dump_file|
         eeprom.read(eeprom.max_position, chunk_size: 1024) do |chunk|
           dump_file.write(chunk)
-          pg.progress += chunk.size
+          pg.progress += chunk.bytesize
         end
       end
     rescue RuntimeError => e
@@ -117,6 +120,19 @@ if le_options[:dump_file] || le_options[:read_file]
     rescue IOError => e
       puts 'File error: ' + e
       exit(7)
+    end
+  end
+  if le_options[:read_file]
+    pg = ProgressBar.create(
+      title: 'Restoring', total: eeprom.max_position,
+      format: LE_PROGRESSBAR_FORMAT
+    )
+    File.open(le_options[:read_file], 'r') do |read_file|
+      while (wrtdata = read_file.read(eeprom.page_size))
+        eeprom.write(wrtdata) do |chunk|
+          pg.progress += chunk.bytesize
+        end
+      end
     end
   end
   eeprom.deconfigure
