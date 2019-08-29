@@ -8,7 +8,9 @@ require 'bundler'
 Bundler.require(:default)
 Dir.glob('lib/**/*.rb') { |f| require_relative f }
 
+LE_PROGRESSBAR_FORMAT = ' %t: [%B] %c/%C bytes '
 le_options = {}
+
 optparse = OptParse.new do |opts|
   opts.banner = '24XXtools - generic program for dumping/restoring 24XX '\
               ' family eeproms using buspirate'
@@ -98,7 +100,7 @@ if le_options[:dump_file] || le_options[:read_file]
   if le_options[:dump_file]
     pg = ProgressBar.create(
       title: 'Dumping', total: eeprom.max_position,
-      format: ' %t: [%B] %c/%C bytes '
+      format: LE_PROGRESSBAR_FORMAT
     )
     begin
       File.open(le_options[:dump_file], 'wb') do |dump_file|
