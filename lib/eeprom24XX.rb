@@ -14,7 +14,7 @@ module Eeprom24XX
       @buspirate = buspirate
       @speed = speed
       @page_size = PAGE_SIZES[eeprom_size]
-      raise 'ArgumentError', 'Unknown eeprom size' if @page_size.nil?
+      raise ArgumentError, 'Unknown eeprom size' if @page_size.nil?
       configure
     end
 
@@ -79,7 +79,7 @@ module Eeprom24XX
           raise 'Unable to get write ack - timeout'
         end
         @pos = pos
-        yeld data_chunk if block_given?
+        yield data_chunk if block_given?
       end
     end
 
