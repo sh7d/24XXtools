@@ -28,7 +28,7 @@ module Eeprom24XX
       result = @buspirate.interface.write_then_read(bit_command)
       raise 'Unable to seek - bad response or timeout?' unless result
 
-      result
+      pos
     end
 
     def read(bytes, chunk_size: 4096)
