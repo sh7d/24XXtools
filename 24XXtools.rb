@@ -1,3 +1,4 @@
+#!/usr/bin/env ruby
 # Encoding: binary
 # frozen_string_literal: true
 
