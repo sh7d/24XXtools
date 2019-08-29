@@ -7,7 +7,7 @@ module Eeprom24XX
   class Memory
     attr_reader :pos, :configured, :max_position
 
-    def initialize(buspirate, eeprom_size, speed: :'400khz')
+    def initialize(buspirate, eeprom_size, speed: :'100khz')
       raise ArgumentError, 'Bad buspirate arg' unless buspirate.instance_of?(Buspirate::Client)
       railse ArugmentError, 'Bad eeprom_size arg' unless eeprom_size.instance_of?(Integer) && !eeprom_size.negative?
       @max_position = eeprom_size * 128 - 1
