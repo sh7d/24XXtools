@@ -12,8 +12,8 @@ LE_PROGRESSBAR_FORMAT = ' %t: [%B] %c/%C bytes '
 le_options = {}
 
 optparse = OptParse.new do |opts|
-  opts.banner = '24XXtools - generic program for dumping/restoring 24XX '\
-              ' family eeproms using buspirate'
+  opts.banner = '24XXtools - generic program for manipulating 24XX eeproms'\
+              ' family memory content using buspirate'
   opts.separator "\nUsage: #{__FILE__} [options]\n"
   opts.separator 'Mandatory config:'
   opts.on(
@@ -25,7 +25,8 @@ optparse = OptParse.new do |opts|
 
     le_options[:device] = device
   end
-  opts.separator 'Operations:'
+  opts.separator 'Eepprom operations:'
+  opts.separator 'Non-destructive operations:'
   opts.on(
     '-o file', '--output file', String, 'Dumps eeprom content to file '\
                                       '(needs also size argiment)'
@@ -40,7 +41,7 @@ optparse = OptParse.new do |opts|
 
     le_options[:size] = size
   end
-  opts.separator ''
+  opts.separator 'Destructive operations:'
   opts.on('-r file', '--restore file', String, 'File from which eeprom will'\
                                                ' be restored') do |file|
     raise "File #{file} does not exist or is not a file" unless File.file?(file)
