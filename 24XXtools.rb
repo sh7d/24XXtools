@@ -29,7 +29,7 @@ optparse = OptParse.new do |opts|
   opts.separator 'Non-destructive operations:'
   opts.on(
     '-o file', '--output file', String, 'Dumps eeprom content to file '\
-                                      '(needs also size argiment)'
+                                      '(needs also size argument)'
   ) do |file|
     raise "File #{file} is a directory" if File.directory?(file)
 
