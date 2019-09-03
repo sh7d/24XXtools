@@ -30,4 +30,3 @@ Tested and working om linux, definitely will not work in windows (contributions 
 ## TODO
 * Allow to disable psu or/and pull-up resistors in case of external hardware used/dumpig content directly from the board
 * Allow to modify and read n bytes at x memory position
-* Wipe - just to make chaos and destruction

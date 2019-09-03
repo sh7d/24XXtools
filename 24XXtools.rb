@@ -48,23 +48,33 @@ optparse = OptParse.new do |opts|
 
     le_options[:read_file] = file
   end
+  opts.on('-w', '--wipe', 'Wipe eeprom memory content'\
+                          '(needs also size argument)') { le_options[:wipe] = true }
   opts.separator 'Buspirate config options:'
   opts.on('--hi-speed', 'Initialize device in hi-speed '\
                                 'mode (Write unstable)') do
     le_options[:hi_speed] = true
   end
 end
+operations_bool = operations = nil
 begin
   optparse.parse!
+  le_options.freeze
   if le_options.empty?
     puts optparse.to_s
     exit
   end
   raise 'Device argument is mandatory' unless le_options[:device]
-  raise 'Dump and restore options cannot be used together' if le_options[:read_file] &&
-                                                              le_options[:dump_file]
-  raise 'Dump option need to be used with size argument' if le_options[:dump_file] && !le_options[:size]
+
+  operations = [
+    le_options[:read_file], le_options[:dump_file], le_options[:wipe]
+  ].freeze
+  operations_bool = operations.map { |h| !h.nil? }
+  op_bad = operations_bool.select { |a| a == true }.size > 1
+  raise 'Dump, restore, wipe options cannot be used together' if op_bad
+  raise 'Dump option needs to be used with size argument' if le_options[:dump_file] && !le_options[:size]
   raise 'Restore option cannot be used with size argument' if le_options[:read_file] && le_options[:size]
+  raise 'Wipe option needs to be used with size argument' if le_options[:wipe] && !le_options[:size]
 rescue OptionParser::InvalidArgument => e
   puts e
   exit(1)
@@ -76,9 +86,7 @@ rescue RuntimeError => e
   exit(2)
 end
 
-le_options.freeze
-
-if le_options[:dump_file] || le_options[:read_file]
+if operations_bool.inject(true) { |f, k| f || k }
   buspirate_port = begin
                      Serial.new(
                        le_options[:device],
@@ -135,6 +143,15 @@ if le_options[:dump_file] || le_options[:read_file]
             pg.progress += chunk.bytesize
           end
         end
+      end
+    end
+    if le_options[:wipe]
+      pg = ProgressBar.create(
+        title: 'Wiping', total: eeprom.max_position,
+        format: LE_PROGRESSBAR_FORMAT
+      )
+      eeprom.write("\xFF" * eeprom.max_position) do |chunk|
+        pg.progress += chunk.bytesize
       end
     end
   rescue RuntimeError => e
