@@ -13,16 +13,26 @@ I had to access directly cyfral intercom central (CC-2000) config memory, and i 
 bundle install
 ```
 ```
-24XXtools - generic program for dumping/restoring 24XX  family eeproms using buspirate
+24XXtools - generic program for manipulating 24XX eeproms family memory content using buspirate
 
 Usage: 24XXtools.rb [options]
 Mandatory config:
     -d, --device device              Path to buspirate device
-Operations:
-    -o, --output file                Dumps eeprom content to file (needs also size argiment)
+
+Eepprom config:
     -s, --size size                  Specifies eeprom size in kilobits (eg: 256 for 24LC256)
 
+Non-destructive operations:
+    -o, --output file                Dumps eeprom content to file (needs also size argument)
+
+Destructive operations:
     -r, --restore file               File from which eeprom will be restored
+    -w, --wipe                       Wipe eeprom memory content(needs also size argument)
+
+Buspirate config options:
+        --hi-speed                   Initialize device in hi-speed mode (Write unstable)
+Other:
+    -h, --help                       Shows this message
 ```
 `ex: ruby 24XXtools.rb -d /dev/buspirate -o dump.bin -s 256`
 ## Project status

@@ -25,8 +25,14 @@ optparse = OptParse.new do |opts|
 
     le_options[:device] = device
   end
-  opts.separator 'Eepprom operations:'
-  opts.separator 'Non-destructive operations:'
+  opts.separator "\nEepprom config:"
+  opts.on('-s size', '--size size', Integer, 'Specifies eeprom size in '\
+                                    'kilobits (eg: 256 for 24LC256)') do |size|
+    raise OptionParser::InvalidArgument, 'Size must be positive' unless size.positive?
+
+    le_options[:size] = size
+  end
+  opts.separator "\nNon-destructive operations:"
   opts.on(
     '-o file', '--output file', String, 'Dumps eeprom content to file '\
                                       '(needs also size argument)'
@@ -35,13 +41,7 @@ optparse = OptParse.new do |opts|
 
     le_options[:dump_file] = file
   end
-  opts.on('-s size', '--size size', Integer, 'Specifies eeprom size in '\
-                                    'kilobits (eg: 256 for 24LC256)') do |size|
-    raise OptionParser::InvalidArgument, 'Size must be positive' unless size.positive?
-
-    le_options[:size] = size
-  end
-  opts.separator 'Destructive operations:'
+  opts.separator "\nDestructive operations:"
   opts.on('-r file', '--restore file', String, 'File from which eeprom will'\
                                                ' be restored') do |file|
     raise "File #{file} does not exist or is not a file" unless File.file?(file)
@@ -50,10 +50,15 @@ optparse = OptParse.new do |opts|
   end
   opts.on('-w', '--wipe', 'Wipe eeprom memory content'\
                           '(needs also size argument)') { le_options[:wipe] = true }
-  opts.separator 'Buspirate config options:'
+  opts.separator "\nBuspirate config options:"
   opts.on('--hi-speed', 'Initialize device in hi-speed '\
                                 'mode (Write unstable)') do
     le_options[:hi_speed] = true
+  end
+  opts.separator 'Other:'
+  opts.on_tail('-h', '--help', 'Shows this message') do
+    puts opts.to_s
+    exit
   end
 end
 operations_bool = operations = nil
