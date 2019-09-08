@@ -14,13 +14,14 @@ module Eeprom24XX
       @buspirate = buspirate
       @speed = speed
       @page_size = PAGE_SIZES[eeprom_size]
+      @pos = 0
       raise ArgumentError, 'Unknown eeprom size' if @page_size.nil?
       configure
     end
 
     def seek(pos)
       raise ArgumentError, 'Bad pos argument' unless pos.instance_of?(Integer) && !pos.negative?
-      raise ArgumentError, 'Position too big' if pos > @max_position
+      raise ArgumentError, 'Position too big' if @pos > @max_position
       raise 'Device must be configured' unless @configured
 
       @pos = pos
@@ -42,6 +43,8 @@ module Eeprom24XX
       last_bytes = bytes
       loop do
         toread = (last_bytes - chunk_size).positive? ? chunk_size : last_bytes
+        break if toread.zero?
+
         result = @buspirate.interface.write_then_read(Commands::READ.chr, toread)
         raise 'Unable to read/timeout' unless result
 
