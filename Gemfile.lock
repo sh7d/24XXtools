@@ -6,6 +6,12 @@ GIT
     rubyserial (1.0.0)
       ffi (~> 1.9, >= 1.9.3)
 
+GIT
+  remote: https://github.com/sh7d/hexdump.git
+  revision: 7a5023f9264eba22920279976d3b0f1297840ecc
+  specs:
+    hexdump (0.2.4)
+
 GEM
   remote: https://rubygems.org/
   specs:
@@ -16,6 +22,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  hexdump!
   ruby-progressbar (~> 1.10)
   rubyserial!
 

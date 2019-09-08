@@ -9,7 +9,7 @@ Bundler.require(:default)
 Dir.glob('lib/**/*.rb') { |f| require_relative f }
 
 LE_PROGRESSBAR_FORMAT = ' %t: [%B] %c/%C bytes '
-le_options = {}
+le_options = {len: 16}
 
 optparse = OptParse.new do |opts|
   opts.banner = '24XXtools - generic program for manipulating 24XX eeproms'\
@@ -41,6 +41,25 @@ optparse = OptParse.new do |opts|
 
     le_options[:dump_file] = file
   end
+  opts.separator ''
+  opts.on(
+    '-e offset', '--read offset', String, 'Reads eeprom content '\
+                                          'at given offset'
+  ) do |offset|
+    le_options[:read_offset] = case offset
+                          when /^\d+$/
+                            offset.to_i
+                          when /^0x\h/i
+                            offset.to_i(16)
+                          else
+                            raise OptionParser::InvalidArgument, 'Invalid offset'
+                          end
+  end
+  opts.on('-l len', '--len len', Integer, "Specifies length in bytes to read (default: #{le_options[:len]})") do |len|
+    raise OptionParser::InvalidArgument, 'Length must be positive' unless len.positive?
+
+    le_options[:len] = len
+  end
   opts.separator "\nDestructive operations:"
   opts.on('-r file', '--restore file', String, 'File from which eeprom will'\
                                                ' be restored') do |file|
@@ -65,21 +84,23 @@ operations_bool = operations = nil
 begin
   optparse.parse!
   le_options.freeze
-  if le_options.empty?
+  if le_options.size == 1
     puts optparse.to_s
     exit
   end
   raise 'Device argument is mandatory' unless le_options[:device]
 
   operations = [
-    le_options[:read_file], le_options[:dump_file], le_options[:wipe]
+    le_options[:read_file], le_options[:dump_file], le_options[:wipe], le_options[:read_offset]
   ].freeze
   operations_bool = operations.map { |h| !h.nil? }
   op_bad = operations_bool.select { |a| a == true }.size > 1
-  raise 'Dump, restore, wipe options cannot be used together' if op_bad
+  raise 'Dump, restore, wipe, read options cannot be used together' if op_bad
   raise 'Dump option needs to be used with size argument' if le_options[:dump_file] && !le_options[:size]
   raise 'Restore option cannot be used with size argument' if le_options[:read_file] && le_options[:size]
   raise 'Wipe option needs to be used with size argument' if le_options[:wipe] && !le_options[:size]
+  raise 'Read option needs to be used with size argument' if le_options[:read_offset] && !le_options[:size]
+  raise 'Read offset outside memory boundaries' if le_options[:read_offset] && le_options[:size]*128 < (le_options[:len] + le_options[:read_offset])
 rescue OptionParser::InvalidArgument => e
   puts e
   exit(1)
@@ -157,6 +178,13 @@ if operations_bool.inject(true) { |f, k| f || k }
       )
       eeprom.write("\xFF" * eeprom.max_position) do |chunk|
         pg.progress += chunk.bytesize
+      end
+    end
+    if le_options[:read_offset]
+      hexdumper = Hexdump::Dumper.new(startpos: le_options[:read_offset], chunk_size: 16)
+      eeprom.seek(le_options[:read_offset])
+      eeprom.read(le_options[:len], chunk_size: 16) do |chunk|
+        hexdumper.dump(chunk)
       end
     end
   rescue RuntimeError => e
