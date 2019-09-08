@@ -25,6 +25,9 @@ Eepprom config:
 Non-destructive operations:
     -o, --output file                Dumps eeprom content to file (needs also size argument)
 
+    -e, --read offset                Reads eeprom content at given offset
+    -l, --len len                    Specifies length in bytes to read (default: 16)
+
 Destructive operations:
     -r, --restore file               File from which eeprom will be restored
     -w, --wipe                       Wipe eeprom memory content(needs also size argument)
@@ -39,4 +42,4 @@ Other:
 Tested and working om linux, definitely will not work in windows (contributions are welcomed)
 ## TODO
 * Allow to disable psu or/and pull-up resistors in case of external hardware used/dumpig content directly from the board
-* Allow to modify and read n bytes at x memory position
+* Allow to modify n bytes at x memory position
