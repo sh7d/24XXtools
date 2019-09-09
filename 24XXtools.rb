@@ -138,10 +138,10 @@ if operations_bool.inject(true) { |f, k| f || k }
   eeprom = begin
              Eeprom24XX::Memory.new(buspirate_client, le_size, speed: le_bp_speed)
            rescue ArgumentError => e
-             puts e
+             puts e.message
              exit(5)
            rescue RuntimeError => e
-             puts 'Unable to configure buspirate i2c mode: ' + e
+             puts 'Unable to configure buspirate i2c mode: ' + e.message
            end
   begin
     if le_options[:dump_file]

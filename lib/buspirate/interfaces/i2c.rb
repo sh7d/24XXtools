@@ -39,7 +39,7 @@ module Buspirate
                     when :'5khz'
                       Commands::I2C::Config::Speed::S5KHZ
                     when :'50khz'
-                      Commands::I2C::Config::Speed::S50KHZ
+                      Commands::I2C::Config::Speed::S50KZ
                     when :'100khz'
                       Commands::I2C::Config::Speed::S100KHZ
                     when :'400khz'
@@ -135,7 +135,8 @@ module Buspirate
 
       def write_then_read(
         data, expected_bytes = 0,
-        succes_timeout: Timeouts::I2C::WRITE_THEN_READ_S
+        succes_timeout: Timeouts::I2C::WRITE_THEN_READ_S,
+        allow_zerobyte: false
       )
         raise ArgumentError, 'Bad data type' unless data.instance_of?(String)
         raise ArgumentError, 'Data is too long' if data.bytesize > 4096
@@ -155,8 +156,11 @@ module Buspirate
         rescue Timeout::Error
           return false
         end
-
-        raise 'Write failed' if result.ord.zero?
+        if allow_zerobyte
+          return false if result.ord.zero?
+        else
+          raise 'Write failed' if result.ord.zero?
+        end
         if expected_bytes != 0
           Timeout.timeout(Timeouts::I2C::WRITE_THEN_READ_D) do
             result = @le_port.read(expected_bytes)
