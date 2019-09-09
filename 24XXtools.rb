@@ -70,10 +70,6 @@ optparse = OptParse.new do |opts|
   opts.on('-w', '--wipe', 'Wipe eeprom memory content'\
                           '(needs also size argument)') { le_options[:wipe] = true }
   opts.separator "\nBuspirate config options:"
-  opts.on('--hi-speed', 'Initialize device in hi-speed '\
-                                'mode (Write unstable)') do
-    le_options[:hi_speed] = true
-  end
   opts.separator 'Other:'
   opts.on_tail('-h', '--help', 'Shows this message') do
     puts opts.to_s
@@ -131,12 +127,10 @@ if operations_bool.inject(true) { |f, k| f || k }
                        puts 'Unable to initialize buspirate: ' + e
                        exit(4)
                      end
-
-  le_bp_speed = le_options[:hi_speed] ? :'400khz' : :'100khz'
   le_size = le_options[:size]
   le_size = (File.size(le_options[:read_file]) + 1) / 128 if le_options[:read_file]
   eeprom = begin
-             Eeprom24XX::Memory.new(buspirate_client, le_size, speed: le_bp_speed)
+             Eeprom24XX::Memory.new(buspirate_client, le_size, speed: :'400khz')
            rescue ArgumentError => e
              puts e.message
              exit(5)
