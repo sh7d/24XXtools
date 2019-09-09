@@ -39,7 +39,7 @@ module Buspirate
                     when :'5khz'
                       Commands::I2C::Config::Speed::S5KHZ
                     when :'50khz'
-                      Commands::I2C::Config::Speed::S50KZ
+                      Commands::I2C::Config::Speed::S50KHZ
                     when :'100khz'
                       Commands::I2C::Config::Speed::S100KHZ
                     when :'400khz'
