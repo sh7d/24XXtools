@@ -110,17 +110,17 @@ end
 
 if operations_bool.inject(true) { |f, k| f || k }
   buspirate_port = begin
-                     Serial.new(
+                     SerialPort.new(
                        le_options[:device],
                        115_200,
                        8,
-                       :none,
                        1,
-                       true
+                       SerialPort::NONE
                      )
                    rescue StandardError => e
                      puts 'Unable to open serial port: ' + e
                    end
+  buspirate_port.flow_control = SerialPort::NONE
   buspirate_client = begin
                        Buspirate::Client.new(buspirate_port)
                      rescue RuntimeError => e

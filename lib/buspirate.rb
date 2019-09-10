@@ -6,7 +6,7 @@ module Buspirate
     attr_reader :mode, :interface
 
     def initialize(serial)
-      raise ArgumentError, 'Shitty arg' unless serial.class == Serial
+      raise ArgumentError, 'Shitty arg' unless serial.class == SerialPort
 
       @le_port = serial
       reset_binary_mode
