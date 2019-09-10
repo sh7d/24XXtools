@@ -79,7 +79,7 @@ module Buspirate
         simplex_command(
           Commands::I2C::Flow::NACK,
           Timeouts::I2C::ACKNACK,
-          'Unable to sent ack'
+          'Unable to sent nack'
         )
       end
 
@@ -98,9 +98,8 @@ module Buspirate
 
       def bulk_write(data)
         raise ArgumentError, 'data must be String instance' unless data.instance_of?(String)
-        raise ArgumentError, 'ack_wait must be boolean' unless [TrueClass, FalseClass].include?(ack_wait)
 
-        if !data.instance_of?(String) || data.instance_of(String) && data.empty?
+        if !data.instance_of?(String) || data.instance_of?(String) && data.empty?
           raise ArgumentError, 'Bad data argument'
         end
         raise ArgumentError, 'Data is too long' if data.bytesize > 16
@@ -113,22 +112,18 @@ module Buspirate
         )
         ack_array = []
         data.each_byte do |data_byte|
-          @le_port.write(data_byte)
-          result = nil
+          @le_port.write(data_byte.chr)
           Timeout.timeout(Timeouts::I2C::SLAVE_ACKNACK) do
-            result = @le_port.read(1)
+            ack_array << case @le_port.read(1).ord
+                         when 0
+                           :ack
+                         when 1
+                           :nack
+                         else
+                           raise 'Unknown bytewrite response'
+                         end
+            yield(ack_result) if block_given?
           end
-          ack_result = case result.ord
-                       when 0
-                         :ack
-                       when 1
-                         :nack
-                       else
-                         raise 'Unknown bytewrite response'
-                       end
-
-          yield(ack_result) if block_given?
-          ack_array << ack_result
         end
         ack_array.freeze
       end
