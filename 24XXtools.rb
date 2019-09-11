@@ -25,6 +25,11 @@ optparse = OptParse.new do |opts|
 
     le_options[:device] = device
   end
+  opts.separator "\nBuspirate config:"
+  opts.on('--disable-power', 'Disable PSU') { le_options[:disable_psu] = true }
+  opts.on('--disable-pull-up', 'Disable pull-up resistors') do
+    le_options[:disable_pull_up] = true
+  end
   opts.separator "\nEepprom config:"
   opts.on('-s size', '--size size', Integer, 'Specifies eeprom size in '\
                                     'kilobits (eg: 256 for 24LC256)') do |size|
@@ -130,7 +135,11 @@ if operations_bool.inject(true) { |f, k| f || k }
   le_size = le_options[:size]
   le_size = (File.size(le_options[:read_file]) + 1) / 128 if le_options[:read_file]
   eeprom = begin
-             Eeprom24XX::Memory.new(buspirate_client, le_size, speed: :'400khz')
+             Eeprom24XX::Memory.new(
+               buspirate_client, le_size, speed: :'400khz',
+               power: !le_options[:disable_psu],
+               pullup: !le_options[:disable_pull_up]
+             )
            rescue ArgumentError => e
              puts e.message
              exit(5)

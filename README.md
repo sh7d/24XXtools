@@ -41,5 +41,5 @@ Other:
 ## Project status
 Tested and working om linux, definitely will not work in windows (contributions are welcomed)
 ## TODO
-* Allow to disable psu or/and pull-up resistors in case of external hardware used/dumpig content directly from the board
 * Allow to modify n bytes at x memory position
+* Quiet mode

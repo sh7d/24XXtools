@@ -7,7 +7,9 @@ module Eeprom24XX
   class Memory
     attr_reader :pos, :configured, :max_position, :page_size
 
-    def initialize(buspirate, eeprom_size, speed: :'100khz')
+    def initialize(
+          buspirate, eeprom_size, speed: :'100khz', power: true, pullup: true
+        )
       raise ArgumentError, 'Bad buspirate arg' unless buspirate.instance_of?(Buspirate::Client)
       raise ArgumentError, 'Bad eeprom_size arg' unless eeprom_size.instance_of?(Integer) && !eeprom_size.negative?
       @max_position = eeprom_size * 128 - 1
@@ -16,7 +18,7 @@ module Eeprom24XX
       @page_size = PAGE_SIZES[eeprom_size]
       @pos = 0
       raise ArgumentError, 'Unknown eeprom size' if @page_size.nil?
-      configure
+      configure(power: power, pullup: pullup)
     end
 
     def seek(pos)
@@ -94,11 +96,11 @@ module Eeprom24XX
       @configured
     end
 
-    def configure
+    def configure(power:, pullup:)
       unless configured
         @buspirate.enter_i2c
         @buspirate.interface.speed(@speed)
-        @buspirate.interface.configure_peripherals(power: true, pullup: true)
+        @buspirate.interface.configure_peripherals(power: power, pullup: pullup)
         @configured = true
         seek(0)
       end
