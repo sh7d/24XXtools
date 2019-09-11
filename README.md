@@ -23,7 +23,7 @@ Buspirate config:
         --disable-power              Disable PSU
         --disable-pull-up            Disable pull-up resistors
 
-Eepprom config:
+Eeprom config:
     -s, --size size                  Specifies eeprom size in kilobits (eg: 256 for 24LC256)
 
 Non-destructive operations:
@@ -42,7 +42,7 @@ Other:
 ```
 `ex: ruby 24XXtools.rb -d /dev/buspirate -o dump.bin -s 256`
 ## Project status
-Tested and working om linux, definitely will not work in windows (contributions are welcomed)
+Tested and working on linux, definitely will not work in windows (contributions are welcomed)
 ## TODO
 * Allow to modify n bytes at x memory position
 * Quiet mode

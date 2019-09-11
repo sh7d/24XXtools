@@ -30,7 +30,7 @@ optparse = OptParse.new do |opts|
   opts.on('--disable-pull-up', 'Disable pull-up resistors') do
     le_options[:disable_pull_up] = true
   end
-  opts.separator "\nEepprom config:"
+  opts.separator "\nEeprom config:"
   opts.on('-s size', '--size size', Integer, 'Specifies eeprom size in '\
                                     'kilobits (eg: 256 for 24LC256)') do |size|
     raise OptionParser::InvalidArgument, 'Size must be positive' unless size.positive?
