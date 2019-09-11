@@ -19,6 +19,10 @@ Usage: 24XXtools.rb [options]
 Mandatory config:
     -d, --device device              Path to buspirate device
 
+Buspirate config:
+        --disable-power              Disable PSU
+        --disable-pull-up            Disable pull-up resistors
+
 Eepprom config:
     -s, --size size                  Specifies eeprom size in kilobits (eg: 256 for 24LC256)
 
@@ -33,7 +37,6 @@ Destructive operations:
     -w, --wipe                       Wipe eeprom memory content(needs also size argument)
 
 Buspirate config options:
-        --hi-speed                   Initialize device in hi-speed mode (Write unstable)
 Other:
     -h, --help                       Shows this message
 ```
