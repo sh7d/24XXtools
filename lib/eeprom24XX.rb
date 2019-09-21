@@ -8,7 +8,7 @@ module Eeprom24XX
     attr_reader :pos, :configured, :max_position, :page_size
 
     def initialize(
-          buspirate, eeprom_size, speed: :'100khz', power: true, pullup: true
+          buspirate, eeprom_size, speed: :'400khz', power: true, pullup: true
         )
       raise ArgumentError, 'Bad buspirate arg' unless buspirate.instance_of?(Buspirate::Client)
       raise ArgumentError, 'Bad eeprom_size arg' unless eeprom_size.instance_of?(Integer) && !eeprom_size.negative?
@@ -42,9 +42,8 @@ module Eeprom24XX
         return nil
       end
       bytestream = ''.b
-      last_bytes = bytes
       loop do
-        toread = (last_bytes - chunk_size).positive? ? chunk_size : last_bytes
+        toread = (bytes - chunk_size).positive? ? chunk_size : bytes
         break if toread.zero?
 
         result = @buspirate.interface.write_then_read(Commands::READ.chr, toread)
@@ -52,9 +51,9 @@ module Eeprom24XX
 
         (@pos + toread) > @max_position ? seek(@max_position) : seek(@pos + toread)
         bytestream << result
-        last_bytes -= chunk_size
+        bytes -= chunk_size
         yield result if block_given?
-        break if last_bytes.negative? || @pos == @max_position
+        break if bytes.negative? || @pos == @max_position
       end
       bytestream.freeze
     end
