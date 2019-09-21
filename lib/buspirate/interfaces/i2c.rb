@@ -151,11 +151,9 @@ module Buspirate
         rescue Timeout::Error
           return false
         end
-        if allow_zerobyte
-          return false if result.ord.zero?
-        else
-          raise 'Write failed' if result.ord.zero?
-        end
+        return false if allow_zerobyte && result.ord.zero?
+        raise 'Write failed' if result.ord.zero?
+
         if expected_bytes != 0
           Timeout.timeout(Timeouts::I2C::WRITE_THEN_READ_D) do
             result = @le_port.read(expected_bytes)
