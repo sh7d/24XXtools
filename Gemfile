@@ -9,3 +9,5 @@ gem "ruby-progressbar", "~> 1.10"
 gem "hexdump", git: 'https://github.com/sh7d/hexdump.git'
 
 gem "serialport", "~> 1.3"
+
+gem "pry", "~> 0.12.2", group: :debug

@@ -74,8 +74,9 @@ optparse = OptParse.new do |opts|
   end
   opts.on('-w', '--wipe', 'Wipe eeprom memory content'\
                           '(needs also size argument)') { le_options[:wipe] = true }
-  opts.separator "\nBuspirate config options:"
-  opts.separator 'Other:'
+  opts.separator "\nDebug/Advanced:"
+  opts.on('-i', '--interactive', 'Run in interactive mode (needs also size argument)') { le_options[:interactive] = true }
+  opts.separator "\nOther:"
   opts.on_tail('-h', '--help', 'Shows this message') do
     puts opts.to_s
     exit
@@ -92,11 +93,13 @@ begin
   raise 'Device argument is mandatory' unless le_options[:device]
 
   operations = [
-    le_options[:read_file], le_options[:dump_file], le_options[:wipe], le_options[:read_offset]
+    le_options[:read_file], le_options[:dump_file],
+    le_options[:wipe],      le_options[:read_offset],
+    le_options[:interactive]
   ].freeze
   operations_bool = operations.map { |h| !h.nil? }
   op_bad = operations_bool.select { |a| a == true }.size > 1
-  raise 'Dump, restore, wipe, read options cannot be used together' if op_bad
+  raise 'Dump, restore, wipe, read, interactive options cannot be used together' if op_bad
   raise 'Dump option needs to be used with size argument' if le_options[:dump_file] && !le_options[:size]
   raise 'Restore option cannot be used with size argument' if le_options[:read_file] && le_options[:size]
   raise 'Wipe option needs to be used with size argument' if le_options[:wipe] && !le_options[:size]
@@ -136,7 +139,7 @@ if operations_bool.inject(true) { |f, k| f || k }
   le_size = (File.size(le_options[:read_file]) + 1) / 128 if le_options[:read_file]
   eeprom = begin
              Eeprom24XX::Memory.new(
-               buspirate_client, le_size, speed: :'400khz',
+               buspirate_client, le_size,
                power: !le_options[:disable_psu],
                pullup: !le_options[:disable_pull_up]
              )
@@ -146,6 +149,10 @@ if operations_bool.inject(true) { |f, k| f || k }
            rescue RuntimeError => e
              puts 'Unable to configure buspirate i2c mode: ' + e.message
            end
+  if le_options[:interactive]
+    Bundler.require(:debug)
+    binding.pry
+  end
   begin
     if le_options[:dump_file]
       pg = ProgressBar.create(

@@ -36,7 +36,9 @@ Destructive operations:
     -r, --restore file               File from which eeprom will be restored
     -w, --wipe                       Wipe eeprom memory content(needs also size argument)
 
-Buspirate config options:
+Debug/Advanced:
+    -i, --interactive                Run in interactive mode (needs also size argument)
+
 Other:
     -h, --help                       Shows this message
 ```
