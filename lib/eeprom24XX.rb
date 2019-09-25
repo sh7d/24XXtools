@@ -12,7 +12,7 @@ module Eeprom24XX
         )
       raise ArgumentError, 'Bad buspirate arg' unless buspirate.instance_of?(Buspirate::Client)
       raise ArgumentError, 'Bad eeprom_size arg' unless eeprom_size.instance_of?(Integer) && !eeprom_size.negative?
-      @max_position = eeprom_size * 128 - 1
+      @max_position = eeprom_size.zero? ? 15 : eeprom_size * 128 - 1
       @buspirate = buspirate
       @speed = speed
       @page_size = PAGE_SIZES[eeprom_size]
@@ -27,7 +27,7 @@ module Eeprom24XX
       raise 'Device must be configured' unless @configured
 
       @pos = pos
-      bit_command = [Commands::SEEKNWRITE, pos].pack('CS>')
+      bit_command = generate_seeknwrite_command(pos)
       result = @buspirate.interface.write_then_read(bit_command)
       raise 'Unable to seek - bad response or timeout?' unless result
 
@@ -71,8 +71,8 @@ module Eeprom24XX
         pos = @pos + data_chunk.size
         begin
           Timeout.timeout(Timeouts::WRITE_WAIT_TIMEOUT) do
+            comm = generate_seeknwrite_command(pos)
             loop do
-              comm = [Commands::SEEKNWRITE, pos].pack('CS>')
               result = @buspirate.interface.write_then_read(comm, 0, allow_zerobyte: true)
               break if result
             end
@@ -104,6 +104,25 @@ module Eeprom24XX
         seek(0)
       end
       @configured
+    end
+
+    private
+
+    def generate_seeknwrite_command(pos)
+      case @max_position
+      when 0..2047
+        [
+          ((Commands::SEEKNWRITE >> 1) | pos >> 8) << 1,
+          pos & 0xFF
+        ].pack('CC')
+      when 2048..65_535
+        [Commands::SEEKNWRITE, pos].pack('CS>')
+      when 65_536..262_143
+        [
+          (Commands::SEEKNWRITE >> 1 | pos >> 16) << 1,
+          pos & 0xFFFF
+        ].pack('CS>')
+      end
     end
   end
 end
