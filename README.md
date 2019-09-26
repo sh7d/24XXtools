@@ -29,12 +29,17 @@ Eeprom config:
 Non-destructive operations:
     -o, --output file                Dumps eeprom content to file (needs also size argument)
 
-    -e, --read offset                Reads eeprom content at given offset
-    -l, --len len                    Specifies length in bytes to read (default: 16)
+    -e, --read [offset]              Reads eeprom content at given offset (default 0)
+                                     If used with quet option - puts string output to stdout
+
+    -l, --len len                    Specifies length in bytes to read (default: max)
 
 Destructive operations:
     -r, --restore file               File from which eeprom will be restored
     -w, --wipe                       Wipe eeprom memory content(needs also size argument)
+
+Runtime options
+    -q, --quiet                      Quiet mode - dont show progressbar or other info
 
 Debug/Advanced:
     -i, --interactive                Run in interactive mode (needs also size argument)
@@ -42,9 +47,8 @@ Debug/Advanced:
 Other:
     -h, --help                       Shows this message
 ```
-`ex: ruby 24XXtools.rb -d /dev/buspirate -o dump.bin -s 256`
+Ex: `ruby 24XXtools.rb -d /dev/buspirate -o dump.bin -s 256`
 ## Project status
 Tested and working on linux, definitely will not work in windows (contributions are welcomed)
 ## TODO
 * Allow to modify n bytes at x memory position
-* Quiet mode

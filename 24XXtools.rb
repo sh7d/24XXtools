@@ -9,7 +9,7 @@ Bundler.require(:default)
 Dir.glob('lib/**/*.rb') { |f| require_relative f }
 
 LE_PROGRESSBAR_FORMAT = ' %t: [%B] %c/%C bytes '
-le_options = {len: 16}
+le_options = { len: :max }
 
 optparse = OptParse.new do |opts|
   opts.banner = '24XXtools - generic program for manipulating 24XX eeproms'\
@@ -48,22 +48,26 @@ optparse = OptParse.new do |opts|
   end
   opts.separator ''
   opts.on(
-    '-e offset', '--read offset', String, 'Reads eeprom content '\
-                                          'at given offset'
+    '-e [offset]', '--read [offset]', String, 'Reads eeprom content '\
+                                          "at given offset (default 0)\n"\
+                                          "#{' ' * 37}If used with "\
+                                          'quet option - puts string output '\
+                                          "to stdout\n\n"
   ) do |offset|
-    le_options[:read_offset] = case offset
-                          when /^\d+$/
-                            offset.to_i
-                          when /^0x\h/i
-                            offset.to_i(16)
-                          else
-                            raise OptionParser::InvalidArgument, 'Invalid offset'
-                          end
+    le_options[:read_offset] = case offset.to_s
+                               when /^\d+$/
+                                 offset.to_i
+                               when /^0x\h/i
+                                 offset.to_i(16)
+                               when /^$/
+                                 0
+                               else
+                                 raise OptionParser::InvalidArgument, 'Invalid offset'
+                               end
   end
-  opts.on('-l len', '--len len', Integer, "Specifies length in bytes to read (default: #{le_options[:len]})") do |len|
-    raise OptionParser::InvalidArgument, 'Length must be positive' unless len.positive?
-
-    le_options[:len] = len
+  opts.on('-l len', '--len len', String, "Specifies length in bytes to read (default: #{le_options[:len]})") do |len|
+    raise OptionParser::InvalidArgument, 'Length must be positive integer or max' if !len.match?(/^(max|\d+)$/)
+    le_options[:len] = len.to_i if len.match?(/^\d+$/)
   end
   opts.separator "\nDestructive operations:"
   opts.on('-r file', '--restore file', String, 'File from which eeprom will'\
@@ -74,6 +78,10 @@ optparse = OptParse.new do |opts|
   end
   opts.on('-w', '--wipe', 'Wipe eeprom memory content'\
                           '(needs also size argument)') { le_options[:wipe] = true }
+  opts.separator "\nRuntime options"
+  opts.on('-q', '--quiet', 'Quiet mode - dont show progressbar or other info') do
+    le_options[:quiet] = true
+  end
   opts.separator "\nDebug/Advanced:"
   opts.on('-i', '--interactive', 'Run in interactive mode (needs also size argument)') { le_options[:interactive] = true }
   opts.separator "\nOther:"
@@ -85,7 +93,6 @@ end
 operations_bool = operations = nil
 begin
   optparse.parse!
-  le_options.freeze
   if le_options.size == 1
     puts optparse.to_s
     exit
@@ -104,7 +111,9 @@ begin
   raise 'Restore option cannot be used with size argument' if le_options[:read_file] && le_options[:size]
   raise 'Wipe option needs to be used with size argument' if le_options[:wipe] && !le_options[:size]
   raise 'Read option needs to be used with size argument' if le_options[:read_offset] && !le_options[:size]
+  le_options[:len] = le_options[:size]*128 if le_options[:len] == :max
   raise 'Read offset outside memory boundaries' if le_options[:read_offset] && le_options[:size]*128 < (le_options[:len] + le_options[:read_offset])
+  le_options.freeze
 rescue OptionParser::InvalidArgument => e
   puts e
   exit(1)
@@ -155,46 +164,59 @@ if operations_bool.inject(true) { |f, k| f || k }
   end
   begin
     if le_options[:dump_file]
-      pg = ProgressBar.create(
-        title: 'Dumping', total: eeprom.max_position,
-        format: LE_PROGRESSBAR_FORMAT
-      )
+      unless le_options[:quiet]
+        pg = ProgressBar.create(
+          title: 'Dumping', total: eeprom.max_position,
+          format: LE_PROGRESSBAR_FORMAT
+        )
+      end
 
       File.open(le_options[:dump_file], 'wb') do |dump_file|
         eeprom.read(eeprom.max_position, chunk_size: 1024) do |chunk|
           dump_file.write(chunk)
-          pg.progress += chunk.bytesize
+          pg.progress += chunk.bytesize unless le_options[:quiet]
         end
       end
 
     end
     if le_options[:read_file]
-      pg = ProgressBar.create(
-        title: 'Restoring', total: eeprom.max_position,
-        format: LE_PROGRESSBAR_FORMAT
-      )
+      unless le_options[:quiet]
+        pg = ProgressBar.create(
+          title: 'Restoring', total: eeprom.max_position,
+          format: LE_PROGRESSBAR_FORMAT
+        )
+      end
       File.open(le_options[:read_file], 'r') do |read_file|
         while (wrtdata = read_file.read(eeprom.page_size))
-          eeprom.write(wrtdata) do |chunk|
-            pg.progress += chunk.bytesize
+          unless le_options[:quiet]
+            eeprom.write(wrtdata) do |chunk|
+              pg.progress += chunk.bytesize
+            end
+          else
+            eeprom.write(wrtdata)
           end
         end
       end
     end
     if le_options[:wipe]
-      pg = ProgressBar.create(
-        title: 'Wiping', total: eeprom.max_position,
-        format: LE_PROGRESSBAR_FORMAT
-      )
+      unless le_options[:quiet]
+        pg = ProgressBar.create(
+          title: 'Wiping', total: eeprom.max_position,
+          format: LE_PROGRESSBAR_FORMAT
+        )
+      end
       eeprom.write("\xFF" * eeprom.max_position) do |chunk|
-        pg.progress += chunk.bytesize
+        pg.progress += chunk.bytesize unless le_options[:quiet]
       end
     end
     if le_options[:read_offset]
-      hexdumper = Hexdump::Dumper.new(startpos: le_options[:read_offset], chunk_size: 16)
+      unless le_options[:quiet]
+        hexdumper = Hexdump::Dumper.new(startpos: le_options[:read_offset], chunk_size: 16)
+      end
       eeprom.seek(le_options[:read_offset])
-      eeprom.read(le_options[:len], chunk_size: 16) do |chunk|
-        hexdumper.dump(chunk)
+      eeprom.read(le_options[:len]) do |chunk|
+        le_options[:quiet] ? print(chunk) : hexdumper.dump(chunk)
+        STDOUT.flush
       end
     end
   rescue RuntimeError => e
