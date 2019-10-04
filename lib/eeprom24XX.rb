@@ -12,6 +12,7 @@ module Eeprom24XX
         )
       raise ArgumentError, 'Bad buspirate arg' unless buspirate.instance_of?(Buspirate::Client)
       raise ArgumentError, 'Bad eeprom_size arg' unless eeprom_size.instance_of?(Integer) && !eeprom_size.negative?
+
       @max_position = eeprom_size.zero? ? 15 : eeprom_size * 128 - 1
       @buspirate = buspirate
       @speed = speed
@@ -37,6 +38,7 @@ module Eeprom24XX
     def read(bytes, chunk_size: 4096)
       raise 'Device must be configured' unless @configured
       raise ArgumentError, 'Bad chunk_size argument' unless chunk_size.instance_of?(Integer) && !chunk_size.negative?
+
       if @pos == @max_position
         yield nil if block_given?
         return nil
@@ -64,10 +66,11 @@ module Eeprom24XX
       data = StringIO.new(data)
 
       while (data_chunk = data.read(@page_size - @pos % @page_size))
-        comm = [Commands::SEEKNWRITE, @pos].pack('CS>')
+        comm = generate_seeknwrite_command(@pos)
         comm += data_chunk
         result = @buspirate.interface.write_then_read(comm, 0)
         raise 'Unable to write - timeout/bad response?' unless result
+
         pos = @pos + data_chunk.size
         begin
           Timeout.timeout(Timeouts::WRITE_WAIT_TIMEOUT) do
@@ -96,7 +99,7 @@ module Eeprom24XX
     end
 
     def configure(power:, pullup:)
-      unless configured
+      unless @configured
         @buspirate.enter_i2c
         @buspirate.interface.speed(@speed)
         @buspirate.interface.configure_peripherals(power: power, pullup: pullup)

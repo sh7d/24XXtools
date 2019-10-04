@@ -111,8 +111,8 @@ begin
   raise 'Restore option cannot be used with size argument' if le_options[:read_file] && le_options[:size]
   raise 'Wipe option needs to be used with size argument' if le_options[:wipe] && !le_options[:size]
   raise 'Read option needs to be used with size argument' if le_options[:read_offset] && !le_options[:size]
-  le_options[:len] = le_options[:size]*128 if le_options[:len] == :max
-  raise 'Read offset outside memory boundaries' if le_options[:read_offset] && le_options[:size]*128 < (le_options[:len] + le_options[:read_offset])
+  le_options[:len] = (le_options[:size]*128 - le_options[:read_offset].to_i) if le_options[:len] == :max
+  raise 'Read offset outside memory boundaries' if (le_options[:read_offset] && le_options[:size]*128 < (le_options[:len] + le_options[:read_offset]) || !le_options[:len].positive?)
   le_options.freeze
 rescue OptionParser::InvalidArgument => e
   puts e
