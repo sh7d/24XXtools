@@ -54,22 +54,23 @@ optparse = OptParse.new do |opts|
                                           'quet option - puts string output '\
                                           "to stdout\n\n"
   ) do |offset|
-    le_options[:read_offset] = case offset.to_s
-                               when /^\d+$/
-                                 offset.to_i
-                               when /^0x\h/i
-                                 offset.to_i(16)
-                               when /^$/
-                                 0
-                               else
-                                 raise OptionParser::InvalidArgument, 'Invalid offset'
-                               end
+    le_options[:read_offset] = satanize_offset(offset)
   end
   opts.on('-l len', '--len len', String, "Specifies length in bytes to read (default: #{le_options[:len]})") do |len|
     raise OptionParser::InvalidArgument, 'Length must be positive integer or max' if !len.match?(/^(max|\d+)$/)
     le_options[:len] = len.to_i if len.match?(/^\d+$/)
   end
   opts.separator "\nDestructive operations:"
+  opts.on(
+    '-t [offset]', '--write-at [offset]', String, 'Writes data at given'\
+                                                  ' offset (default: 0) - data is taken'\
+                                                  " from first argument and hex-decoded\n"\
+                                                  "#{' ' * 36} If used with "\
+                                                  'quiet option - data is '\
+                                                  "taken from ARGF\n\n"
+  ) do |offset|
+    le_options[:write_offset] = satanize_offset(offset)
+  end
   opts.on('-r file', '--restore file', String, 'File from which eeprom will'\
                                                ' be restored') do |file|
     raise "File #{file} does not exist or is not a file" unless File.file?(file)
@@ -100,19 +101,22 @@ begin
   raise 'Device argument is mandatory' unless le_options[:device]
 
   operations = [
-    le_options[:read_file], le_options[:dump_file],
-    le_options[:wipe],      le_options[:read_offset],
-    le_options[:interactive]
+    le_options[:read_file],   le_options[:dump_file],
+    le_options[:wipe],        le_options[:read_offset],
+    le_options[:interactive], le_options[:write_offset]
   ].freeze
   operations_bool = operations.map { |h| !h.nil? }
   op_bad = operations_bool.select { |a| a == true }.size > 1
-  raise 'Dump, restore, wipe, read, interactive options cannot be used together' if op_bad
+  raise 'Dump, restore, wipe, read, write, interactive options cannot be used together' if op_bad
   raise 'Dump option needs to be used with size argument' if le_options[:dump_file] && !le_options[:size]
   raise 'Restore option cannot be used with size argument' if le_options[:read_file] && le_options[:size]
   raise 'Wipe option needs to be used with size argument' if le_options[:wipe] && !le_options[:size]
   raise 'Read option needs to be used with size argument' if le_options[:read_offset] && !le_options[:size]
+  raise 'Write option needs to be used with size argument' if le_options[:write_offset] && !le_options[:size]
   le_options[:len] = (le_options[:size]*128 - le_options[:read_offset].to_i) if le_options[:len] == :max
   raise 'Read offset outside memory boundaries' if (le_options[:read_offset] && le_options[:size]*128 < (le_options[:len] + le_options[:read_offset]) || !le_options[:len].positive?)
+  raise 'Write offset outside memory boundaries' if (le_options[:write_offset] && le_options[:size]*128 < le_options[:write_offset])
+  raise 'Bad write data format' if le_options[:write_offset] && (!le_options[:quiet] && !ARGV[0].match?(/^(?:0x|)[0-f]/i))
   le_options.freeze
 rescue OptionParser::InvalidArgument => e
   puts e
@@ -218,6 +222,17 @@ if operations_bool.inject(true) { |f, k| f || k }
         le_options[:quiet] ? print(chunk) : hexdumper.dump(chunk)
         STDOUT.flush
       end
+    end
+    if le_options[:write_offset]
+      Bundler.require(:debug)
+      le_data = if le_options[:quiet]
+                  ARGF.read.to_s.b
+                else
+                  [ARGV[0].to_s.sub(/^0x/i, '')].pack('H*')
+                end
+      eeprom.seek(le_options[:write_offset].to_i)
+      eeprom.write(le_data)
+      puts 'Data succesfully written' unless le_options[:quiet]
     end
   rescue RuntimeError => e
     puts "\nDevice communication error: " + e.message

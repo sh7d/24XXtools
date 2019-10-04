@@ -35,6 +35,9 @@ Non-destructive operations:
     -l, --len len                    Specifies length in bytes to read (default: max)
 
 Destructive operations:
+    -t, --write-at [offset]          Writes data at given offset (default: 0) - data is taken from first argument and hex-decoded
+                                     If used with quiet option - data is taken from ARGF
+
     -r, --restore file               File from which eeprom will be restored
     -w, --wipe                       Wipe eeprom memory content(needs also size argument)
 
@@ -46,9 +49,12 @@ Debug/Advanced:
 
 Other:
     -h, --help                       Shows this message
+
 ```
 Ex: `ruby 24XXtools.rb -d /dev/buspirate -o dump.bin -s 256`
 ## Project status
 Tested and working on linux, definitely will not work in windows (contributions are welcomed)
 ## TODO
-* Allow to modify n bytes at x memory position
+* Split project into serveal gems (one for buspirate, one for eeprom)
+* Add backends support
+* Add native linux backend
