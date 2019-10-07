@@ -54,7 +54,7 @@ optparse = OptParse.new do |opts|
                                           'quet option - puts string output '\
                                           "to stdout\n\n"
   ) do |offset|
-    le_options[:read_offset] = satanize_offset(offset)
+    le_options[:read_offset] = parse_offset(offset)
   end
   opts.on('-l len', '--len len', String, "Specifies length in bytes to read (default: #{le_options[:len]})") do |len|
     raise OptionParser::InvalidArgument, 'Length must be positive integer or max' if !len.match?(/^(max|\d+)$/)
@@ -69,7 +69,7 @@ optparse = OptParse.new do |opts|
                                                   'quiet option - data is '\
                                                   "taken from ARGF\n\n"
   ) do |offset|
-    le_options[:write_offset] = satanize_offset(offset)
+    le_options[:write_offset] = parse_offset(offset)
   end
   opts.on('-r file', '--restore file', String, 'File from which eeprom will'\
                                                ' be restored') do |file|
@@ -225,11 +225,7 @@ if operations_bool.inject(true) { |f, k| f || k }
     end
     if le_options[:write_offset]
       Bundler.require(:debug)
-      le_data = if le_options[:quiet]
-                  ARGF.read.to_s.b
-                else
-                  [ARGV[0].to_s.sub(/^0x/i, '')].pack('H*')
-                end
+      le_data = le_options[:quiet] ? ARGF.read.to_s.b : [ARGV[0].to_s.sub(/^0x/i, '')].pack('H*')
       eeprom.seek(le_options[:write_offset].to_i)
       eeprom.write(le_data)
       puts 'Data succesfully written' unless le_options[:quiet]

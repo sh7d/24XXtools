@@ -2,7 +2,7 @@
 # Encoding: binary
 # frozen_string_literal: true
 
-def satanize_offset(offset)
+def parse_offset(offset)
   case offset.to_s
   when /^\d+$/
     offset.to_i

@@ -122,7 +122,7 @@ module Buspirate
                          else
                            raise 'Unknown bytewrite response'
                          end
-            yield(ack_result) if block_given?
+            yield(ack_array.last) if block_given?
           end
         end
         ack_array.freeze
