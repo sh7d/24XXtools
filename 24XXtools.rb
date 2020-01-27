@@ -226,7 +226,6 @@ if operations_bool.inject(true) { |f, k| f || k }
       end
     end
     if le_options[:write_offset]
-      Bundler.require(:debug)
       le_data = le_options[:quiet] ? ARGF.read.to_s.b : [ARGV[0].to_s.sub(/^0x/i, '')].pack('H*')
       eeprom.seek(le_options[:write_offset].to_i)
       eeprom.write(le_data)
