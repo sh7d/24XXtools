@@ -5,6 +5,8 @@
 require 'expect'
 require 'optparse'
 require 'bundler'
+require 'rbuspirate'
+
 Bundler.require(:default)
 Dir.glob('lib/**/*.rb') { |f| require_relative f }
 
@@ -143,7 +145,7 @@ if operations_bool.inject(true) { |f, k| f || k }
                    end
   buspirate_port.flow_control = SerialPort::NONE
   buspirate_client = begin
-                       Buspirate::Client.new(buspirate_port)
+                       Rbuspirate::Client.new(buspirate_port)
                      rescue RuntimeError => e
                        puts 'Unable to initialize buspirate: ' + e
                        exit(4)
