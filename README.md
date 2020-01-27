@@ -4,7 +4,7 @@ Simple tool made to manipulate content of 24XX eeprom chip family using bus pira
 ### Reason
 I had to access directly cyfral intercom central (CC-2000) config memory, and i had no fucking idea how to use hardware provided by producent (GC-2000), so i wrote my custom software
 ## Requirments
-* Ruby (tested on 2.6.3)
+* Ruby (tested on 2.7.0) (WILL NOT WORK ON ODLER RUBY VERSION)
 * Bus pirate (tested on hardware version 3.6)
 * Unix-like Os (tested on arch linux)
 
