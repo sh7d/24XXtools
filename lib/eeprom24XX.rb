@@ -63,7 +63,7 @@ module Eeprom24XX
     def write(data)
       raise 'Device must be configured' unless @configured
       raise ArgumentError, 'Data too big' if @pos + data.size > @max_position
-      data = StringIO.new(data)
+      data = StringIO.new(data.b)
 
       while (data_chunk = data.read(@page_size - @pos % @page_size))
         comm = generate_seeknwrite_command(@pos)
@@ -87,15 +87,6 @@ module Eeprom24XX
         yield data_chunk if block_given?
       end
       data.size
-    end
-
-    def deconfigure
-      if @configured
-        @buspirate.interface.configure_peripherals(power: false, pullup: false)
-        @buspirate.reset_binary_mode
-        @configured = false
-      end
-      @configured
     end
 
     def configure(power:, pullup:)
