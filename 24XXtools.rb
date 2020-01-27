@@ -115,9 +115,11 @@ begin
   raise 'Wipe option needs to be used with size argument' if le_options[:wipe] && !le_options[:size]
   raise 'Read option needs to be used with size argument' if le_options[:read_offset] && !le_options[:size]
   raise 'Write option needs to be used with size argument' if le_options[:write_offset] && !le_options[:size]
-  le_options[:len] = (le_options[:size]*128 - le_options[:read_offset].to_i) if le_options[:len] == :max
-  raise 'Read offset outside memory boundaries' if (le_options[:read_offset] && le_options[:size]*128 < (le_options[:len] + le_options[:read_offset]) || !le_options[:len].positive?)
-  raise 'Write offset outside memory boundaries' if (le_options[:write_offset] && le_options[:size]*128 < le_options[:write_offset])
+  if le_options[:size]
+    le_options[:len] = (le_options[:size] * 128 - le_options[:read_offset].to_i) if le_options[:len] == :max
+    raise 'Read offset outside memory boundaries' if (le_options[:read_offset] && le_options[:size]*128 < (le_options[:len] + le_options[:read_offset]) || !le_options[:len].positive?)
+    raise 'Write offset outside memory boundaries' if (le_options[:write_offset] && le_options[:size]*128 < le_options[:write_offset])
+  end
   raise 'Bad write data format' if le_options[:write_offset] && (!le_options[:quiet] && !ARGV[0].match?(/^(?:0x|)[0-f]/i))
   le_options.freeze
 rescue OptionParser::InvalidArgument => e
@@ -163,6 +165,7 @@ if operations_bool.inject(true) { |f, k| f || k }
              exit(5)
            rescue RuntimeError => e
              puts 'Unable to configure buspirate i2c mode: ' + e.message
+             exit(6)
            end
   if le_options[:interactive]
     Bundler.require(:debug)
@@ -233,12 +236,12 @@ if operations_bool.inject(true) { |f, k| f || k }
     end
   rescue RuntimeError => e
     puts "\nDevice communication error: " + e.message
-    exit(6)
+    exit(7)
   rescue IOError => e
     puts "\nFile error: " + e.message
-    exit(7)
+    exit(8)
   ensure
-    eeprom.deconfigure
+    buspirate_client.reset_binary_mode
     buspirate_port.close
   end
 else
