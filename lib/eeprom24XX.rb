@@ -101,7 +101,7 @@ module Eeprom24XX
     def configure(power:, pullup:)
       unless @configured
         @buspirate.enter_i2c
-        @buspirate.interface.speed(@speed)
+        @buspirate.interface.speed = @speed
         @buspirate.interface.configure_peripherals(power: power, pullup: pullup)
         @configured = true
         seek(0)
