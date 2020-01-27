@@ -10,7 +10,7 @@ module Eeprom24XX
     def initialize(
           buspirate, eeprom_size, speed: :'400khz', power: true, pullup: true
         )
-      raise ArgumentError, 'Bad buspirate arg' unless buspirate.instance_of?(Buspirate::Client)
+      raise ArgumentError, 'Bad buspirate arg' unless buspirate.instance_of?(Rbuspirate::Client)
       raise ArgumentError, 'Bad eeprom_size arg' unless eeprom_size.instance_of?(Integer) && !eeprom_size.negative?
 
       @max_position = eeprom_size.zero? ? 15 : eeprom_size * 128 - 1
