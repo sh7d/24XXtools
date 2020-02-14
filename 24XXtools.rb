@@ -181,7 +181,7 @@ if operations_bool.inject(true) { |f, k| f || k }
       end
 
       File.open(le_options[:dump_file], 'wb') do |dump_file|
-        eeprom.read(eeprom.max_position, chunk_size: 1024) do |chunk|
+        eeprom.read(eeprom.max_position, chunk_size: 4096) do |chunk|
           dump_file.write(chunk)
           pg.progress += chunk.bytesize unless le_options[:quiet]
         end
