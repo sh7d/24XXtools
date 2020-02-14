@@ -12,4 +12,4 @@ gem "serialport", "~> 1.3"
 
 gem "pry", "~> 0.12.2", group: :debug
 
-gem "rbuspirate", "~> 0.1.2"
+gem "rbuspirate", git: 'https://github.com/sh7d/rbuspirate.git'
